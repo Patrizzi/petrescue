@@ -22,7 +22,11 @@ const dbConfig = {
     waitForConnections: true,
     connectionLimit: 5,
     queueLimit: 0,
-    connectTimeout: 3000
+    connectTimeout: 5000,
+    // TiDB Serverless y nubes MySQL requieren conexión cifrada SSL (TLS >= 1.2)
+    ssl: (process.env.DB_HOST && process.env.DB_HOST !== 'localhost' && process.env.DB_HOST !== '127.0.0.1') || process.env.DB_SSL === 'true'
+        ? { minVersion: 'TLSv1.2', rejectUnauthorized: true }
+        : undefined
 };
 
 // ==============================================================================
