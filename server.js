@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -127,8 +128,26 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Servir archivos estáticos
 app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+// Ruta principal para servir index.html (Soluciona 'Cannot GET /' en Vercel)
+app.get(['/', '/index.html'], (req, res) => {
+    const rutasPosibles = [
+        path.join(__dirname, 'index.html'),
+        path.join(__dirname, 'public', 'index.html'),
+        path.join(process.cwd(), 'index.html'),
+        path.join(process.cwd(), 'public', 'index.html')
+    ];
+    for (const r of rutasPosibles) {
+        if (fs.existsSync(r)) {
+            return res.sendFile(r);
+        }
+    }
+    res.sendFile(path.resolve('index.html'));
+});
 
 // ==============================================================================
 // 2. RUTAS DE LA API (CRUD Y ENDPOINTS)
