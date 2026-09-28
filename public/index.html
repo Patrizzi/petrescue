@@ -37,12 +37,21 @@
       <nav class="nav-tabs">
         <button id="btnNavVoluntario" class="tab-btn active tab-voluntario" type="button">Vista Voluntario</button>
         <button id="btnNavAdoptante" class="tab-btn tab-adoptante" type="button">Vista Adoptante</button>
+        <button id="btnNavDashboard" class="tab-btn tab-dashboard" type="button">Dashboard ONG <span id="tabLockBadge" class="tab-badge-lock">🔒</span></button>
       </nav>
     </div>
 
-    <!-- Indicador de Conexión a MySQL XAMPP -->
+    <!-- Indicador de Conexión a MySQL y Control de Sesión -->
     <div class="nav-right">
-      <div id="dbStatusPill" class="db-pill" title="Conexión activa con MySQL en XAMPP phpMyAdmin">
+      <div id="userAuthContainer" class="user-auth-wrapper">
+        <button id="btnOpenLoginModal" class="btn-login" type="button">🔑 Iniciar Sesión</button>
+        <div id="userProfileBadge" class="user-badge-pill" style="display: none;">
+          <span id="userProfileRole">🛡️ ADMIN_ONG (admin)</span>
+          <button id="btnLogout" class="btn-logout-link" type="button" title="Cerrar sesión">Salir</button>
+        </div>
+      </div>
+
+      <div id="dbStatusPill" class="db-pill" title="Conexión activa con MySQL / TiDB Cloud">
         <span class="db-dot"></span>
         <span>MySQL Conectado</span>
       </div>
@@ -407,6 +416,125 @@
   </main>
 
   <!-- ==========================================================
+       VISTA 3: DASHBOARD DE LA ONG (PANEL RESTRINGIDO A ADMIN_ONG)
+       ========================================================== -->
+  <main id="viewDashboard" class="view-section">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">Dashboard Administrativo - ONG</h1>
+        <p class="page-subtitle">Panel interno para gestión de animales rescatados y revisión de solicitudes de adopción.</p>
+      </div>
+
+      <!-- Banner Informativo de Restricción Crítica SENATI -->
+      <div class="security-banner">
+        <div class="security-banner-icon">🛡️</div>
+        <div class="security-banner-text">
+          <h4>Restricción Crítica de Acceso (SENATI - Tarea 6)</h4>
+          <p>
+            El backend está configurado para que <strong>solo los usuarios con rol ADMIN_ONG</strong> puedan consumir los endpoints que exponen datos personales de los adoptantes (Teléfono, dirección, correo e identificación). El público general solo puede ver los datos públicos de los animales.
+          </p>
+        </div>
+      </div>
+
+      <!-- 4 Widgets de Estadísticas Principales -->
+      <div class="dashboard-grid-stats">
+        <div class="stat-card-widget">
+          <div class="stat-widget-icon indigo">🐾</div>
+          <div class="stat-widget-info">
+            <div id="dashTotalMascotas" class="val">2</div>
+            <div class="lbl">Animales Rescatados</div>
+          </div>
+        </div>
+
+        <div class="stat-card-widget">
+          <div class="stat-widget-icon emerald">🏠</div>
+          <div class="stat-widget-info">
+            <div id="dashMascotasDisponibles" class="val">1</div>
+            <div class="lbl">Listos para Adopción</div>
+          </div>
+        </div>
+
+        <div class="stat-card-widget">
+          <div class="stat-widget-icon amber">📋</div>
+          <div class="stat-widget-info">
+            <div id="dashTotalSolicitudes" class="val">1</div>
+            <div class="lbl">Solicitudes Recibidas</div>
+          </div>
+        </div>
+
+        <div class="stat-card-widget">
+          <div class="stat-widget-icon purple">✨</div>
+          <div class="stat-widget-info">
+            <div id="dashSolicitudesAprobadas" class="val">0</div>
+            <div class="lbl">Adopciones Aprobadas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLA 1: Solicitudes de Adopción (DATOS PERSONALES PROTEGIDOS) -->
+      <div class="dashboard-table-card">
+        <div class="table-card-header">
+          <div class="table-card-title">📋 Solicitudes de Adopción (Datos de Postulantes)</div>
+          <span class="user-badge-pill" style="font-size: 11px;">🔒 Protegido: ADMIN_ONG</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Mascota</th>
+                <th>Solicitante</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
+                <th>Ubicación</th>
+                <th>Tipo Vivienda</th>
+                <th>Estado</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="dashTableSolicitudesBody">
+              <!-- Las solicitudes se inyectan dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TABLA 2: Inventario de Animales Rescatados -->
+      <div class="dashboard-table-card">
+        <div class="table-card-header">
+          <div class="table-card-title">🐶 Inventario de Animales Rescatados</div>
+          <button id="btnIrNuevoRescate" type="button" class="btn-pill-header" style="font-size: 12px; padding: 6px 14px;">
+            + Registrar Nuevo Rescate
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Animal</th>
+                <th>Código</th>
+                <th>Especie</th>
+                <th>Raza</th>
+                <th>Edad / Peso</th>
+                <th>Sexo</th>
+                <th>Esterilizado</th>
+                <th>Estado Adopción</th>
+              </tr>
+            </thead>
+            <tbody id="dashTableMascotasBody">
+              <!-- Las mascotas se inyectan dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+
+  <!-- ==========================================================
        MODAL: AGREGAR REGISTRO AL HISTORIAL MÉDICO
        ========================================================== -->
   <div id="modalAddMedical" class="modal-overlay">
@@ -480,6 +608,50 @@
       <button type="button" id="btnCloseSuccessModal" class="btn-orange" style="width: 100%; justify-content: center;">
         Entendido y Volver
       </button>
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       MODAL: INICIAR SESIÓN (ROLES: ADMIN_ONG / USER)
+       ========================================================== -->
+  <div id="modalLogin" class="modal-overlay">
+    <div class="modal-content" style="max-width: 440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 Iniciar Sesión en PetRescue</h3>
+        <button type="button" id="btnCloseLoginModal" class="btn-close-modal">&times;</button>
+      </div>
+
+      <form id="formLogin">
+        <div class="form-group">
+          <label class="form-label required" for="loginUsername">Usuario</label>
+          <input type="text" id="loginUsername" class="form-control" placeholder="admin o usuario" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required" for="loginPassword">Contraseña</label>
+          <input type="password" id="loginPassword" class="form-control" placeholder="1234" required autocomplete="current-password">
+        </div>
+
+        <!-- Botones de Acceso Rápido para Evaluar Fácilmente -->
+        <div class="quick-login-row">
+          <div class="quick-login-label">Accesos rápidos de prueba (1 clic):</div>
+          <div class="quick-login-chips">
+            <button type="button" id="btnFillAdmin" class="chip-role-btn">
+              🛡️ Admin (1234)
+            </button>
+            <button type="button" id="btnFillUser" class="chip-role-btn">
+              👤 Usuario (1234)
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-actions" style="margin-top: 20px;">
+          <button type="button" id="btnCancelLoginModal" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-pill-header" style="padding: 10px 22px; background: #4f46e5;">
+            Ingresar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

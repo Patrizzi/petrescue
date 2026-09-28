@@ -98,7 +98,52 @@ let memoryHistorial = [
     }
 ];
 
-let memorySolicitudes = [];
+let memorySolicitudes = [
+    {
+        id: 1,
+        mascota_id: 2,
+        nombre_mascota: 'Max',
+        codigo_mascota: '#PR-2026-0347',
+        codigo_solicitud: '#SOL-2026-4683',
+        nombre_solicitante: 'Carlos Mendoza Gómez',
+        email: 'carlos.mendoza@email.com',
+        telefono: '+52 55 1234 5678',
+        ciudad: 'Ciudad de México',
+        colonia: 'Condesa',
+        tipo_vivienda: 'Casa con jardín',
+        metros_cuadrados: '85 m²',
+        tiene_jardin: 1,
+        permite_mascotas: 1,
+        area_descanso: 1,
+        horas_solo: '2 a 4 horas',
+        responsable: 'Carlos Mendoza',
+        tiempo_paseos: '1 hora diaria',
+        plan_emergencia: 'Familiar de confianza',
+        experiencia_previa: 'Sí, con experiencia',
+        otras_mascotas: 'Ninguna',
+        veterinario_referencia: 'Clínica Condesa',
+        acuerdo_familiar: 'Sí, todos de acuerdo',
+        presupuesto_estimado: '$2,000 MXN',
+        estado_solicitud: 'Pendiente',
+        fecha_solicitud: '2026-09-28 10:30:00'
+    }
+];
+
+// Gestión de Sesiones y Roles en Memoria (Tokens activos)
+const sesionesActivas = new Map();
+// Sesiones iniciales predeterminadas
+sesionesActivas.set('token_admin_demo', {
+    id: 1,
+    username: 'admin',
+    nombre: 'Administrador PetRescue ONG',
+    rol: 'ADMIN_ONG'
+});
+sesionesActivas.set('token_user_demo', {
+    id: 2,
+    username: 'usuario',
+    nombre: 'Usuario General / Adoptante',
+    rol: 'USER'
+});
 
 // Pool de conexiones a MySQL
 let pool = null;
@@ -509,8 +554,133 @@ app.post('/api/solicitudes_adopcion', async (req, res) => {
     });
 });
 
-// Listar solicitudes de adopción recibidas
-app.get('/api/solicitudes_adopcion', async (req, res) => {
+// ==============================================================================
+// 3. AUTENTICACIÓN, SESIONES Y RESTRICCIÓN CRÍTICA (ADMIN_ONG vs USER)
+// ==============================================================================
+
+// Endpoint: Iniciar Sesión (admin/1234 -> ADMIN_ONG, usuario/1234 -> USER)
+app.post('/api/auth/login', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Usuario y contraseña requeridos.' });
+    }
+
+    let userFound = null;
+
+    // 1. Probar en MySQL / TiDB
+    try {
+        if (pool) {
+            const [rows] = await pool.query(
+                'SELECT id, username, password, nombre, rol FROM usuarios WHERE username = ?',
+                [username]
+            );
+            if (rows.length > 0 && rows[0].password === password) {
+                userFound = {
+                    id: rows[0].id,
+                    username: rows[0].username,
+                    nombre: rows[0].nombre,
+                    rol: rows[0].rol
+                };
+            }
+        }
+    } catch (e) {
+        console.warn('Error consultando usuarios en DB, usando memoria');
+    }
+
+    // 2. Si no se encontró en DB o estamos en modo demo
+    if (!userFound) {
+        if (username === 'admin' && password === '1234') {
+            userFound = {
+                id: 1,
+                username: 'admin',
+                nombre: 'Administrador PetRescue ONG',
+                rol: 'ADMIN_ONG'
+            };
+        } else if (username === 'usuario' && password === '1234') {
+            userFound = {
+                id: 2,
+                username: 'usuario',
+                nombre: 'Usuario General / Adoptante',
+                rol: 'USER'
+            };
+        }
+    }
+
+    if (!userFound) {
+        return res.status(401).json({
+            error: 'Credenciales inválidas. Usa admin / 1234 o usuario / 1234'
+        });
+    }
+
+    // Generar token de sesión
+    const token = 'token_' + Buffer.from(userFound.username + ':' + Date.now()).toString('base64');
+    sesionesActivas.set(token, userFound);
+
+    res.json({
+        success: true,
+        message: `Bienvenido(a) ${userFound.nombre}`,
+        token,
+        user: userFound
+    });
+});
+
+// Endpoint: Verificar sesión activa
+app.get('/api/auth/me', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
+
+    if (token && sesionesActivas.has(token)) {
+        return res.json({ authenticated: true, user: sesionesActivas.get(token) });
+    }
+    res.json({ authenticated: false, user: null });
+});
+
+// Endpoint: Cerrar Sesión
+app.post('/api/auth/logout', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
+    if (token) sesionesActivas.delete(token);
+    res.json({ success: true, message: 'Sesión cerrada correctamente' });
+});
+
+// ==============================================================================
+// MIDDLEWARE: RESTRICCIÓN CRÍTICA (SENATI TAREA 6)
+// Solo usuarios con rol ADMIN_ONG pueden consumir endpoints que exponen datos personales
+// ==============================================================================
+function verificarAdminONG(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : authHeader;
+
+    if (!token) {
+        return res.status(401).json({
+            error: 'Acceso no autorizado: debes iniciar sesión como administrador de la ONG.'
+        });
+    }
+
+    const sesion = sesionesActivas.get(token);
+    if (!sesion) {
+        return res.status(401).json({
+            error: 'Sesión expirada o token no válido. Inicia sesión nuevamente.'
+        });
+    }
+
+    // Verificación estricta del rol ADMIN_ONG
+    if (sesion.rol !== 'ADMIN_ONG') {
+        return res.status(403).json({
+            error: 'Restricción Crítica: Solo los usuarios con rol ADMIN_ONG pueden consumir los endpoints que exponen datos personales de los adoptantes (Teléfono, dirección, identificación). El público general solo puede ver los datos de los animales.'
+        });
+    }
+
+    req.user = sesion;
+    next();
+}
+
+// ==============================================================================
+// 4. ENDPOINTS PROTEGIDOS DEL DASHBOARD (SOLO ADMIN_ONG)
+// ==============================================================================
+
+// Listar solicitudes de adopción (Expone datos personales -> PROTEGIDO POR ADMIN_ONG)
+app.get('/api/solicitudes_adopcion', verificarAdminONG, async (req, res) => {
     try {
         if (pool) {
             const [solicitudes] = await pool.query(`
@@ -525,6 +695,79 @@ app.get('/api/solicitudes_adopcion', async (req, res) => {
         console.warn('Consultando solicitudes en memoria');
     }
     res.json(memorySolicitudes);
+});
+
+// Actualizar estado de solicitud (Aprobar / Rechazar -> PROTEGIDO POR ADMIN_ONG)
+app.patch('/api/solicitudes_adopcion/:id/estado', verificarAdminONG, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const { estado } = req.body; // 'Aprobada' | 'Rechazada' | 'Pendiente'
+
+    if (!['Aprobada', 'Rechazada', 'Pendiente'].includes(estado)) {
+        return res.status(400).json({ error: 'Estado no válido' });
+    }
+
+    try {
+        if (pool) {
+            await pool.query('UPDATE solicitudes_adopcion SET estado_solicitud = ? WHERE id = ?', [estado, id]);
+        }
+    } catch (e) {
+        console.warn('Actualizando estado en memoria');
+    }
+
+    const sol = memorySolicitudes.find(s => s.id === id);
+    if (sol) sol.estado_solicitud = estado;
+
+    res.json({
+        success: true,
+        message: `Solicitud #${id} actualizada con éxito a estado: ${estado}`,
+        estado
+    });
+});
+
+// Métricas y estadísticas para el Dashboard de la ONG (PROTEGIDO POR ADMIN_ONG)
+app.get('/api/dashboard/stats', verificarAdminONG, async (req, res) => {
+    try {
+        let totalMascotas = memoryMascotas.length;
+        let mascotasDisponibles = memoryMascotas.filter(m => m.estado_adopcion === 'Disponible').length;
+        let totalSolicitudes = memorySolicitudes.length;
+        let solicitudesAprobadas = memorySolicitudes.filter(s => s.estado_solicitud === 'Aprobada').length;
+        let solicitudesPendientes = memorySolicitudes.filter(s => s.estado_solicitud === 'Pendiente').length;
+        let totalHistorial = memoryHistorial.length;
+
+        if (pool) {
+            const [[pCount]] = await pool.query('SELECT COUNT(*) as c FROM mascotas');
+            const [[pDisp]] = await pool.query("SELECT COUNT(*) as c FROM mascotas WHERE estado_adopcion = 'Disponible'");
+            const [[sCount]] = await pool.query('SELECT COUNT(*) as c FROM solicitudes_adopcion');
+            const [[sAprob]] = await pool.query("SELECT COUNT(*) as c FROM solicitudes_adopcion WHERE estado_solicitud = 'Aprobada'");
+            const [[sPend]] = await pool.query("SELECT COUNT(*) as c FROM solicitudes_adopcion WHERE estado_solicitud = 'Pendiente'");
+            const [[hCount]] = await pool.query('SELECT COUNT(*) as c FROM historial_medico');
+
+            totalMascotas = pCount.c;
+            mascotasDisponibles = pDisp.c;
+            totalSolicitudes = sCount.c;
+            solicitudesAprobadas = sAprob.c;
+            solicitudesPendientes = sPend.c;
+            totalHistorial = hCount.c;
+        }
+
+        res.json({
+            totalMascotas,
+            mascotasDisponibles,
+            totalSolicitudes,
+            solicitudesAprobadas,
+            solicitudesPendientes,
+            totalHistorial
+        });
+    } catch (e) {
+        res.json({
+            totalMascotas: memoryMascotas.length,
+            mascotasDisponibles: 1,
+            totalSolicitudes: memorySolicitudes.length,
+            solicitudesAprobadas: 0,
+            solicitudesPendientes: memorySolicitudes.length,
+            totalHistorial: memoryHistorial.length
+        });
+    }
 });
 
 // ==============================================================================

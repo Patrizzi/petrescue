@@ -1,14 +1,24 @@
 -- ==========================================================
--- SCRIPT SQL OPTIMIZADO PARA TiDB SERVERLESS (TiDB Cloud)
+-- SCRIPT SQL OPTIMIZADO PARA TiDB SERVERLESS Y MYSQL
 -- ==========================================================
--- 100% Compatible con la consola web y SQL Editor de TiDB
+-- Incluye control de roles: ADMIN_ONG y USER (SENATI Tarea 6)
 -- ==========================================================
 
 -- 1. Crear y seleccionar la base de datos
 CREATE DATABASE IF NOT EXISTS `petrescue_db`;
 USE `petrescue_db`;
 
--- 2. Tabla de Mascotas
+-- 2. Tabla de Usuarios y Roles (Seguridad y Sesiones)
+CREATE TABLE IF NOT EXISTS `usuarios` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `username` VARCHAR(50) NOT NULL UNIQUE,
+    `password` VARCHAR(100) NOT NULL,
+    `nombre` VARCHAR(100) NOT NULL,
+    `rol` VARCHAR(20) NOT NULL DEFAULT 'USER',
+    `fecha_creacion` DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Tabla de Mascotas Rescatadas
 CREATE TABLE IF NOT EXISTS `mascotas` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `codigo` VARCHAR(30) NOT NULL UNIQUE,
@@ -26,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `mascotas` (
     `fecha_rescate` DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Tabla de Historial Médico
+-- 4. Tabla de Historial Médico
 CREATE TABLE IF NOT EXISTS `historial_medico` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `mascota_id` INT NOT NULL,
@@ -39,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `historial_medico` (
     INDEX `idx_mascota_id` (`mascota_id`)
 );
 
--- 4. Tabla de Solicitudes de Adopción
+-- 5. Tabla de Solicitudes de Adopción (Contiene Datos Personales Protegidos)
 CREATE TABLE IF NOT EXISTS `solicitudes_adopcion` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `mascota_id` INT NOT NULL,
@@ -59,6 +69,7 @@ CREATE TABLE IF NOT EXISTS `solicitudes_adopcion` (
     `otras_mascotas` VARCHAR(200) DEFAULT '',
     `veterinario_referencia` VARCHAR(150) DEFAULT '',
     `acuerdo_familiar` VARCHAR(50) DEFAULT '',
+    -- Datos personales restringidos a ADMIN_ONG:
     `nombre_solicitante` VARCHAR(150) NOT NULL,
     `email` VARCHAR(120) NOT NULL,
     `telefono` VARCHAR(50) NOT NULL,
@@ -70,13 +81,19 @@ CREATE TABLE IF NOT EXISTS `solicitudes_adopcion` (
     INDEX `idx_solicitud_mascota` (`mascota_id`)
 );
 
--- 5. Datos Iniciales: Luna y Max
+-- 6. Usuarios Iniciales (Credenciales: admin/1234 y usuario/1234)
+REPLACE INTO `usuarios` (`id`, `username`, `password`, `nombre`, `rol`)
+VALUES
+(1, 'admin', '1234', 'Administrador PetRescue ONG', 'ADMIN_ONG'),
+(2, 'usuario', '1234', 'Usuario General / Adoptante', 'USER');
+
+-- 7. Datos Iniciales: Luna y Max
 REPLACE INTO `mascotas` (`id`, `codigo`, `nombre`, `especie`, `raza`, `edad`, `peso`, `sexo`, `esterilizado`, `descripcion_estado`, `ubicacion_rescate`, `imagen_url`, `estado_adopcion`)
 VALUES 
 (1, '#PR-2024-0091', 'Luna', 'Perro', 'Mestizo Terrier', '1 año y medio', '4.2 kg', 'Hembra', 'Sí', 'Rescatada en condición vulnerable, actualmente recuperada y en seguimiento de salud continuo.', 'Av. Central 310, Col. San Rafael, CDMX', '/images/luna.jpg', 'En Proceso'),
 (2, '#PR-2026-0347', 'Max', 'Perro', 'Pastor Alemán', '2 años', '28 kg', 'Macho', 'Sí', 'Max es cariñoso, enérgico y muy leal. Ideal para familias activas con espacio exterior.', 'Parque México, Col. Hipódromo Condesa, CDMX', '/images/max.jpg', 'Disponible');
 
--- 6. Historial Médico de Luna (#PR-2024-0091)
+-- 8. Historial Médico de Luna (#PR-2024-0091)
 REPLACE INTO `historial_medico` (`id`, `mascota_id`, `tipo_evento`, `titulo`, `veterinario`, `fecha`, `notas`)
 VALUES
 (1, 1, 'Chequeo', 'Chequeo general', 'Dra. Sofía Arredondo', '2026-09-14', 'Animal en buen estado general. Peso: 4.2 kg. Vacuna antirrábica aplicada.'),
