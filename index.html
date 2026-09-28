@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PetRescue - Dashboard de Rescates y Solicitud de Adopción</title>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Estilos del Sistema PetRescue -->
+  <link rel="stylesheet" href="/public/css/style.css">
+</head>
+<body>
+
+  <!-- ==========================================================
+       BARRA DE NAVEGACIÓN SUPERIOR
+       ========================================================== -->
+  <header class="navbar">
+    <div class="nav-left">
+      <!-- Logo PetRescue -->
+      <a href="#" class="brand-logo">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Huella de Mascota en Color Naranja y Marrón Elegante -->
+          <ellipse cx="9" cy="9" rx="3" ry="4" fill="#ea580c" />
+          <ellipse cx="23" cy="9" rx="3" ry="4" fill="#ea580c" />
+          <ellipse cx="16" cy="6" rx="3.2" ry="4.5" fill="#ea580c" />
+          <ellipse cx="4.5" cy="15" rx="2.5" ry="3.5" fill="#ea580c" />
+          <ellipse cx="27.5" cy="15" rx="2.5" ry="3.5" fill="#ea580c" />
+          <path d="M16 12C10.5 12 7 15.5 8 21.5C8.8 26.2 12.5 28 16 28C19.5 28 23.2 26.2 24 21.5C25 15.5 21.5 12 16 12Z" fill="#1e293b"/>
+          <ellipse cx="16" cy="20" rx="3.5" ry="3" fill="#ea580c" />
+        </svg>
+        <span>PetRescue</span>
+      </a>
+
+      <!-- Selector de Vistas (Tabs) -->
+      <nav class="nav-tabs">
+        <button id="btnNavVoluntario" class="tab-btn active tab-voluntario" type="button">Vista Voluntario</button>
+        <button id="btnNavAdoptante" class="tab-btn tab-adoptante" type="button">Vista Adoptante</button>
+      </nav>
+    </div>
+
+    <!-- Indicador de Conexión a MySQL XAMPP -->
+    <div class="nav-right">
+      <div id="dbStatusPill" class="db-pill" title="Conexión activa con MySQL en XAMPP phpMyAdmin">
+        <span class="db-dot"></span>
+        <span>MySQL Conectado</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================================
+       VISTA 1: PANEL DEL VOLUNTARIO (DISEÑO 1)
+       ========================================================== -->
+  <main id="viewVoluntario" class="view-section active">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">Panel del Voluntario</h1>
+        <p class="page-subtitle">Registra rescates y lleva el historial médico al día.</p>
+      </div>
+
+      <div class="volunteer-grid">
+        <!-- COLUMNA IZQUIERDA: FORMULARIO NUEVO RESCATE -->
+        <section class="card" aria-labelledby="cardRescueTitle">
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="header-icon-box amber">
+                <!-- Icono de rescate -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 5.172a2 2 0 0 0-1.414.586L4.828 9.515A2 2 0 0 0 4.243 11l.585 5.267A2 2 0 0 0 6.812 18H17.19a2 2 0 0 0 1.984-1.733L19.757 11a2 2 0 0 0-.585-1.485L15.414 5.758A2 2 0 0 0 14 5.172V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v1.172z"/>
+                  <circle cx="9" cy="12" r="1"/>
+                  <circle cx="15" cy="12" r="1"/>
+                  <path d="M12 15c.6 0 1-.4 1-1h-2c0 .6.4 1 1 1z"/>
+                </svg>
+              </div>
+              <div>
+                <h2 id="cardRescueTitle" class="card-title">Nuevo Rescate</h2>
+                <p class="card-subtitle">Completa todos los campos del animal rescatado</p>
+              </div>
+            </div>
+          </div>
+
+          <form id="formNuevoRescate">
+            <!-- Campo: Fotografía del Animal -->
+            <div class="form-group">
+              <label class="form-label">Fotografía del animal</label>
+              <div id="uploadDropzone" class="upload-dropzone">
+                <input type="file" id="fotoInput" accept="image/png, image/jpeg, image/webp" style="display: none;">
+                
+                <div id="uploadContent">
+                  <div class="upload-camera-circle">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  </div>
+                  <div class="upload-prompt">Haz clic para subir imagen</div>
+                  <div class="upload-hint">PNG, JPG hasta 10 MB</div>
+                </div>
+
+                <div id="uploadPreviewContainer" class="upload-preview-container">
+                  <img id="uploadPreviewImg" class="upload-preview-img" alt="Foto del animal rescatado" />
+                  <button type="button" id="btnRemovePhoto" class="btn-remove-photo" title="Eliminar foto">&times;</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Campo Opcional: Nombre provisional -->
+            <div class="form-group">
+              <label class="form-label" for="nombreRescate">Nombre provisional (Opcional)</label>
+              <input type="text" id="nombreRescate" class="form-control" placeholder="Ej: Luna, Max, Pelusa...">
+            </div>
+
+            <!-- Campo: Especie -->
+            <div class="form-group">
+              <label class="form-label required" for="especieSelect">Especie</label>
+              <select id="especieSelect" class="form-control" required>
+                <option value="" disabled selected>Selecciona una especie...</option>
+                <option value="Perro">Perro</option>
+                <option value="Gato">Gato</option>
+                <option value="Ave">Ave</option>
+                <option value="Conejo">Conejo</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <!-- Campo: Descripción del Estado -->
+            <div class="form-group">
+              <label class="form-label required" for="descripcionEstado">Descripción del estado</label>
+              <textarea id="descripcionEstado" class="form-control" required placeholder="Describe el estado del animal al momento del rescate: condición física, comportamiento, señales de heridas, etc."></textarea>
+            </div>
+
+            <!-- Campo: Ubicación del Rescate -->
+            <div class="form-group">
+              <label class="form-label required" for="ubicacionRescate">Ubicación del rescate</label>
+              <div class="input-with-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <input type="text" id="ubicacionRescate" class="form-control" required placeholder="Ej: Av. Insurgentes 420, Col. Roma Norte, CDMX">
+              </div>
+            </div>
+
+            <!-- Botón Guardar Rescate -->
+            <button type="submit" class="btn-primary">Guardar rescate</button>
+          </form>
+        </section>
+
+        <!-- COLUMNA DERECHA: HISTORIAL MÉDICO -->
+        <section class="card" aria-labelledby="cardMedicalTitle">
+          <div class="card-header">
+            <div class="card-header-left">
+              <div class="header-icon-box teal">
+                <!-- Icono Médico/Estetoscopio -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/>
+                  <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/>
+                  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/>
+                  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>
+                </svg>
+              </div>
+              <div>
+                <h2 id="cardMedicalTitle" class="card-title">Historial Médico</h2>
+                <p id="medicalAnimalSubtitle" class="card-subtitle">Animal: Luna - ID #PR-2024-0091</p>
+              </div>
+            </div>
+
+            <!-- Botón + Agregar registro -->
+            <button id="btnOpenAddMedicalModal" type="button" class="btn-pill-header">
+              <span>+</span> Agregar registro
+            </button>
+          </div>
+
+          <!-- Resumen de Estadísticas Médicas -->
+          <div class="stats-row">
+            <div class="stat-item">
+              <span class="stat-icon">📄</span>
+              <div id="statConsultas" class="stat-number">4</div>
+              <div class="stat-label">Consultas</div>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">💊</span>
+              <div id="statTratamientos" class="stat-number">2</div>
+              <div class="stat-label">Tratamientos</div>
+            </div>
+            <div class="stat-item">
+              <span class="stat-icon">⏱</span>
+              <div id="statUltimoChequeo" class="stat-number">7 días</div>
+              <div class="stat-label">Último chequeo</div>
+            </div>
+          </div>
+
+          <!-- Timeline del Historial Médico (Cargado dinámicamente desde MySQL) -->
+          <div id="medicalTimeline" class="timeline">
+            <!-- Items de timeline serán inyectados por JS -->
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================
+       VISTA 2: SOLICITUD DE ADOPCIÓN (DISEÑO 2)
+       ========================================================== -->
+  <main id="viewAdoptante" class="view-section">
+    <div class="container container-narrow">
+      <div class="page-header">
+        <h1 class="page-title">Solicitud de Adopción</h1>
+        <p class="page-subtitle">Completa el formulario para adoptar a tu nueva mascota.</p>
+      </div>
+
+      <!-- TARJETA DEL ANIMAL DISPONIBLE (MAX - PASTOR ALEMÁN) -->
+      <div class="pet-profile-card">
+        <div class="pet-avatar-wrapper">
+          <img src="/images/max.jpg" class="pet-avatar-img" alt="Max, perro pastor alemán disponible para adopción" />
+        </div>
+        <div class="pet-details">
+          <div class="pet-title-row">
+            <h2 class="pet-name">Max</h2>
+            <span class="status-badge-disponible">✦ Disponible</span>
+          </div>
+          <div class="pet-id-tag">#PR-2026-0347</div>
+
+          <div class="pet-specs-grid">
+            <div>Especie: <strong>Perro</strong></div>
+            <div>Raza: <strong>Pastor Alemán</strong></div>
+            <div>Edad: <strong>2 años</strong></div>
+            <div>Peso: <strong>28 kg</strong></div>
+            <div>Sexo: <strong>Macho</strong></div>
+            <div>Esterilizado: <strong>Sí</strong></div>
+          </div>
+
+          <p class="pet-description">
+            Max es cariñoso, enérgico y muy leal. Ideal para familias activas con espacio exterior.
+          </p>
+        </div>
+      </div>
+
+      <!-- FORMULARIO MULTIPASO (WIZARD DE 4 PASOS) -->
+      <div id="adoptionFormContainer" class="card">
+        <!-- Navegador de Pasos (Tabs Superiores) -->
+        <div class="stepper-nav">
+          <div class="step-tab active" data-step="1">
+            <span class="step-number">1</span> Hogar
+          </div>
+          <div class="step-tab" data-step="2">
+            <span class="step-number">2</span> Rutina
+          </div>
+          <div class="step-tab" data-step="3">
+            <span class="step-number">3</span> Experiencia
+          </div>
+          <div class="step-tab" data-step="4">
+            <span class="step-number">4</span> Compromiso
+          </div>
+        </div>
+
+        <form id="adoptionForm">
+          <!-- PASO 1: HOGAR -->
+          <div class="step-pane active" data-step="1">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required" for="adoptTipoVivienda">Tipo de vivienda</label>
+                <input type="text" id="adoptTipoVivienda" class="form-control" placeholder="Ej: Casa con jardín" required value="Casa con jardín">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="adoptMetros">Metros cuadrados</label>
+                <input type="text" id="adoptMetros" class="form-control" placeholder="Ej: 85 m²" value="85 m²">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required" for="adoptColonia">Colonia / Barrio</label>
+                <input type="text" id="adoptColonia" class="form-control" placeholder="Ej: Condesa" required value="Condesa">
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="adoptCiudad">Ciudad</label>
+                <input type="text" id="adoptCiudad" class="form-control" placeholder="Ej: Ciudad de México" required value="Ciudad de México">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Características del hogar</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="chkJardin" checked>
+                  <span>Tengo jardín o patio exterior seguro</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="chkEdificio" checked>
+                  <span>Mi edificio o arrendador permite mascotas</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="chkAreaDescanso" checked>
+                  <span>Cuento con área de descanso para el perro</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- PASO 2: RUTINA -->
+          <div class="step-pane" data-step="2">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required" for="adoptHorasSolo">Horas que pasará solo al día</label>
+                <input type="text" id="adoptHorasSolo" class="form-control" placeholder="Ej: 2 a 4 horas" value="2 a 4 horas">
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="adoptResponsable">¿Quién será el responsable principal?</label>
+                <input type="text" id="adoptResponsable" class="form-control" placeholder="Ej: Carlos Mendoza (Solicitante)" value="Yo mismo">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="adoptPaseos">Tiempo diario para paseos / ejercicio</label>
+                <input type="text" id="adoptPaseos" class="form-control" placeholder="Ej: 1 hora diaria" value="1 hora y media diaria">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="adoptEmergencia">Plan en caso de viaje o emergencia</label>
+                <input type="text" id="adoptEmergencia" class="form-control" placeholder="Ej: Guardería o familiar" value="Familiar de confianza">
+              </div>
+            </div>
+          </div>
+
+          <!-- PASO 3: EXPERIENCIA -->
+          <div class="step-pane" data-step="3">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="adoptExperiencia">¿Has tenido mascotas anteriormente?</label>
+                <select id="adoptExperiencia" class="form-control">
+                  <option value="Sí, con experiencia" selected>Sí, con experiencia previa</option>
+                  <option value="Sí, tengo actualmente">Sí, tengo actualmente otra mascota</option>
+                  <option value="No, primera mascota">No, sería mi primera mascota</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="adoptOtrasMascotas">Otras mascotas en casa actualmente</label>
+                <input type="text" id="adoptOtrasMascotas" class="form-control" placeholder="Ej: 1 gato esterilizado o Ninguna" value="Ninguna">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="adoptVeterinario">Clínica veterinaria de confianza</label>
+                <input type="text" id="adoptVeterinario" class="form-control" placeholder="Ej: Hospital Veterinario Condesa" value="Clínica Veterinaria Condesa">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="adoptAcuerdo">¿Todos en el hogar están de acuerdo?</label>
+                <select id="adoptAcuerdo" class="form-control">
+                  <option value="Sí, todos de acuerdo" selected>Sí, todos 100% de acuerdo</option>
+                  <option value="En proceso de acuerdo">En proceso</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- PASO 4: COMPROMISO Y DATOS DE CONTACTO -->
+          <div class="step-pane" data-step="4">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required" for="adoptNombre">Nombre completo del solicitante</label>
+                <input type="text" id="adoptNombre" class="form-control" placeholder="Ej: Carlos Mendoza Gómez" value="Carlos Mendoza Gómez">
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="adoptEmail">Correo electrónico</label>
+                <input type="email" id="adoptEmail" class="form-control" placeholder="Ej: carlos@example.com" value="carlos.mendoza@email.com">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required" for="adoptTelefono">Teléfono de contacto</label>
+                <input type="tel" id="adoptTelefono" class="form-control" placeholder="Ej: +52 55 1234 5678" value="+52 55 1234 5678">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="adoptPresupuesto">Presupuesto mensual estimado (Alimento/Salud)</label>
+                <input type="text" id="adoptPresupuesto" class="form-control" placeholder="Ej: $2,000 MXN" value="$2,000 MXN">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Términos y compromisos</label>
+              <div class="checkbox-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="chkCompromiso" checked required>
+                  <span>Me comprometo a brindar alimentación, atención veterinaria y cariño de por vida.</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="chkSeguimiento" checked>
+                  <span>Acepto recibir visitas o llamadas de seguimiento por parte del equipo de PetRescue.</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pie del Stepper con Botones de Navegación -->
+          <div class="stepper-footer">
+            <button type="button" id="btnStepPrev" class="btn-secondary" disabled>← Anterior</button>
+            <span id="stepIndicatorText" class="step-indicator-text">Paso 1 de 4</span>
+            <button type="button" id="btnStepNext" class="btn-orange">Siguiente →</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================================
+       MODAL: AGREGAR REGISTRO AL HISTORIAL MÉDICO
+       ========================================================== -->
+  <div id="modalAddMedical" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Agregar Registro Médico</h3>
+        <button type="button" id="btnCloseMedicalModal" class="btn-close-modal">&times;</button>
+      </div>
+
+      <form id="formAddMedical">
+        <div class="form-group">
+          <label class="form-label required" for="medTipo">Tipo de Evento</label>
+          <select id="medTipo" class="form-control" required>
+            <option value="Chequeo" selected>Chequeo</option>
+            <option value="Diagnóstico">Diagnóstico</option>
+            <option value="Tratamiento">Tratamiento</option>
+            <option value="Vacuna">Vacuna</option>
+            <option value="Cirugía">Cirugía</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required" for="medTitulo">Título o Procedimiento</label>
+          <input type="text" id="medTitulo" class="form-control" placeholder="Ej: Chequeo semestral, Vacuna Rabia..." required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required" for="medVeterinario">Médico Veterinario</label>
+          <input type="text" id="medVeterinario" class="form-control" placeholder="Ej: Dra. Sofía Arredondo" required value="Dra. Sofía Arredondo">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required" for="medFecha">Fecha</label>
+          <input type="date" id="medFecha" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required" for="medNotas">Notas Clínicas y Diagnóstico</label>
+          <textarea id="medNotas" class="form-control" required placeholder="Describe las observaciones, peso, recetas o tratamiento aplicado..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btnCancelMedicalModal" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-pill-header" style="padding: 10px 20px;">Guardar en MySQL</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================
+       MODAL: ÉXITO EN SOLICITUD DE ADOPCIÓN
+       ========================================================== -->
+  <div id="modalAdoptionSuccess" class="modal-overlay">
+    <div class="modal-content" style="text-align: center;">
+      <div style="width: 56px; height: 56px; background: #ffedd5; color: #ea580c; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 26px;">
+        🐶
+      </div>
+      <h3 class="modal-title" style="margin-bottom: 8px;">¡Solicitud de Adopción Registrada!</h3>
+      <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">
+        Tu solicitud para adoptar a <strong>Max</strong> ha sido guardada en la base de datos MySQL con el código:
+      </p>
+      
+      <div style="background: #fff7ed; border: 1.5px dashed #fdba74; padding: 12px; border-radius: 12px; margin-bottom: 18px;">
+        <span id="modalAdoptionCode" style="font-size: 20px; font-weight: 800; color: #c2410c; letter-spacing: 1px;">#SOL-2026-0000</span>
+      </div>
+
+      <p style="font-size: 13px; color: #475569; margin-bottom: 24px;">
+        Gracias <strong id="modalAdoptionApplicant"></strong>. El equipo de PetRescue revisará la información de tu hogar y rutina para contactarte.
+      </p>
+
+      <button type="button" id="btnCloseSuccessModal" class="btn-orange" style="width: 100%; justify-content: center;">
+        Entendido y Volver
+      </button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/public/js/app.js"></script>
+</body>
+</html>
